@@ -1,0 +1,34 @@
+# Build
+bin/
+obj/
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+*.slnx
+
+# Rider / JetBrains
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# BepInEx local stuff 
+BepInEx/
+doorstop_config.ini
+winhttp.dll
+
+# Game files 
+Lethal Company/
+Lethal Company_Data/
+
+# Thunderstore packaging 
+*.zip
+
+# Debug
+*.pdb
