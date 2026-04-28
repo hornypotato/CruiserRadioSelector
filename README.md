@@ -37,3 +37,7 @@ No more spamming the "next track" button 30 times — just select what you want 
 - Better UI(maybe wheel-like menu)
 - Option to turn off the radio with the menu
 
+## Credits
+
+- Mellowdy for making CruiserTunes and patching vanilla buggy cruiser radio
+- Scandal for helping with code optimization
