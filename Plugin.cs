@@ -5,14 +5,16 @@ using UnityEngine.InputSystem;
 
 namespace CruiserRadioSelector
 {
-    [BepInPlugin("Potatoh.CruiserRadioSelector", "Cruiser Radio Selector", "1.3.2")]
+    [BepInPlugin("Potatoh.CruiserRadioSelector", "Cruiser Radio Selector", "1.4.0")]
     [BepInDependency("Mellowdy.CruiserTunes", BepInDependency.DependencyFlags.SoftDependency)]
     public class Plugin : BaseUnityPlugin
     {
         internal static ManualLogSource Log = null!;
 
+        private const int TracksPerPage = 10;
         private int currentPage = 0;
-        internal static VehicleController? CachedCar;
+
+        private static VehicleController? cachedCar;
 
         private void Awake()
         {
@@ -20,12 +22,25 @@ namespace CruiserRadioSelector
             Log.LogInfo("Cruiser Radio Selector loaded!");
         }
 
+        private static VehicleController? GetCar()
+        {
+            if (cachedCar == null || cachedCar.gameObject == null)
+                cachedCar = FindObjectOfType<VehicleController>();
+
+            if (cachedCar == null)
+                return null;
+
+            // vehicleID 0 = vanilla Company Cruiser.
+            // Prevents touching custom vehicles like Scanvan or other modded cruisers.
+            if (cachedCar.vehicleID != 0)
+                return null;
+
+            return cachedCar;
+        }
+
         private void Update()
         {
             if (!UnityEngine.Application.isPlaying) return;
-
-            if (CachedCar == null || CachedCar.gameObject == null)
-                CachedCar = FindObjectOfType<VehicleController>();
 
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null) return;
@@ -36,28 +51,26 @@ namespace CruiserRadioSelector
                 return;
             }
 
-            bool selectorHeld = keyboard.cKey.isPressed;
-            if (!selectorHeld) return;
+            if (!keyboard.cKey.isPressed) return;
 
-            if (keyboard.digit1Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 0);
-            if (keyboard.digit2Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 1);
-            if (keyboard.digit3Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 2);
-            if (keyboard.digit4Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 3);
-            if (keyboard.digit5Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 4);
-            if (keyboard.digit6Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 5);
-            if (keyboard.digit7Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 6);
-            if (keyboard.digit8Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 7);
-            if (keyboard.digit9Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 8);
-            if (keyboard.digit0Key.wasPressedThisFrame) TrySetTrack(currentPage * 10 + 9);
+            if (keyboard.digit1Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 0);
+            if (keyboard.digit2Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 1);
+            if (keyboard.digit3Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 2);
+            if (keyboard.digit4Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 3);
+            if (keyboard.digit5Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 4);
+            if (keyboard.digit6Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 5);
+            if (keyboard.digit7Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 6);
+            if (keyboard.digit8Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 7);
+            if (keyboard.digit9Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 8);
+            if (keyboard.digit0Key.wasPressedThisFrame) TrySetTrack(currentPage * TracksPerPage + 9);
         }
 
         private void NextPage()
         {
-            VehicleController? car = CachedCar;
+            VehicleController? car = GetCar();
             if (car == null || car.radioClips == null || car.radioClips.Length == 0) return;
 
-            int tracksPerPage = 10;
-            int totalPages = Mathf.CeilToInt(car.radioClips.Length / (float)tracksPerPage);
+            int totalPages = Mathf.CeilToInt(car.radioClips.Length / (float)TracksPerPage);
 
             currentPage++;
             if (currentPage >= totalPages)
@@ -68,11 +81,11 @@ namespace CruiserRadioSelector
 
         private static void TrySetTrack(int index)
         {
-            VehicleController? car = CachedCar;
+            VehicleController? car = GetCar();
 
             if (car == null)
             {
-                Log.LogWarning("VehicleController not found.");
+                Log.LogWarning("Vanilla VehicleController not found.");
                 return;
             }
 
@@ -88,7 +101,7 @@ namespace CruiserRadioSelector
                 return;
             }
 
-            int signalQuality = 3;
+            const int signalQuality = 3;
 
             Log.LogInfo($"Setting cruiser radio track: {index + 1}/{car.radioClips.Length}");
 
@@ -100,14 +113,12 @@ namespace CruiserRadioSelector
             Keyboard keyboard = Keyboard.current;
             if (keyboard == null) return;
 
-            bool selectorHeld = keyboard.cKey.isPressed;
-            if (!selectorHeld) return;
+            if (!keyboard.cKey.isPressed) return;
 
-            VehicleController? car = CachedCar;
+            VehicleController? car = GetCar();
             if (car == null || car.radioClips == null || car.radioClips.Length == 0) return;
 
-            int tracksPerPage = 10;
-            int totalPages = Mathf.CeilToInt(car.radioClips.Length / (float)tracksPerPage);
+            int totalPages = Mathf.CeilToInt(car.radioClips.Length / (float)TracksPerPage);
             currentPage = Mathf.Clamp(currentPage, 0, Mathf.Max(0, totalPages - 1));
 
             GUI.Box(new Rect(20, 80, 460, 350), "");
@@ -115,9 +126,9 @@ namespace CruiserRadioSelector
             GUI.Label(new Rect(35, 95, 420, 25), $"Cruiser Radio Selector | Page {currentPage + 1}/{totalPages}");
             GUI.Label(new Rect(35, 120, 420, 25), "Hold C + 1-9/0 - select track | V - next page");
 
-            for (int slot = 0; slot < tracksPerPage; slot++)
+            for (int slot = 0; slot < TracksPerPage; slot++)
             {
-                int index = currentPage * tracksPerPage + slot;
+                int index = currentPage * TracksPerPage + slot;
                 if (index >= car.radioClips.Length) break;
 
                 string key = slot == 9 ? "0" : (slot + 1).ToString();
