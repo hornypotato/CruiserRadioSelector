@@ -2,6 +2,7 @@
 using BepInEx.Logging;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using HarmonyLib;
 
 namespace CruiserRadioSelector
 {
@@ -20,24 +21,24 @@ namespace CruiserRadioSelector
         {
             Log = Logger;
             Log.LogInfo("Cruiser Radio Selector loaded!");
-        }
 
+            new Harmony("Potatoh.CruiserRadioSelector").PatchAll();
+        }
+        internal static void SetCachedCar(VehicleController car)
+        {
+            cachedCar = car;
+            Log.LogInfo("Cached vanilla VehicleController.");
+        }
         private static VehicleController? GetCar()
         {
             if (cachedCar == null || cachedCar.gameObject == null)
-                cachedCar = FindObjectOfType<VehicleController>();
-
-            if (cachedCar == null)
                 return null;
 
-            // vehicleID 0 = vanilla Company Cruiser.
-            // Prevents touching custom vehicles like Scanvan or other modded cruisers.
             if (cachedCar.vehicleID != 0)
                 return null;
 
             return cachedCar;
         }
-
         private void Update()
         {
             if (!UnityEngine.Application.isPlaying) return;
@@ -138,6 +139,19 @@ namespace CruiserRadioSelector
                     new Rect(35, 155 + slot * 25, 420, 25),
                     $"C + {key}  |  {index + 1}. {name}"
                 );
+            }
+        }
+        [HarmonyPatch(typeof(VehicleController), "Awake")]
+        public static class VehicleControllerAwakePatch
+        {
+            public static void Postfix(VehicleController __instance)
+            {
+                if (__instance == null) return;
+
+                // vehicleID 0 = vanilla Company Cruiser
+                if (__instance.vehicleID != 0) return;
+
+                Plugin.SetCachedCar(__instance);
             }
         }
     }
